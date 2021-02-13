@@ -30,6 +30,17 @@ const usersSchema = new mongoose.Schema({
   },
 });
 
+usersSchema.pre("save", async function (next) {
+  const user = this;
+  const saltRounds = 8;
+
+  if (user.isModified("password")) {
+    user.password = await bcrypt.hash(user.password, saltRounds);
+  }
+
+  next();
+});
+
 usersSchema.statics.findByCredentials = async function (email, password) {
   const user = await Users.findOne({ email });
 
@@ -45,16 +56,6 @@ usersSchema.statics.findByCredentials = async function (email, password) {
 
   return user;
 };
-
-usersSchema.pre("save", async function (next) {
-  const saltRounds = 8;
-
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, saltRounds);
-  }
-
-  next();
-});
 
 const Users = mongoose.model("users", usersSchema);
 
