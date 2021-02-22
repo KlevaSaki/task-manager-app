@@ -27,7 +27,7 @@ router.post("/users/login", async (req, res) => {
 
     res.send({ user, token });
   } catch (error) {
-    res.status(400).send(error);
+    res.status(400).send("No user found! Sign up for an account.");
   }
 });
 
@@ -59,23 +59,7 @@ router.get("/users/me", auth, async (req, res) => {
   res.send(req.user);
 });
 
-router.get("/users/:id", async (req, res) => {
-  const _id = req.params.id;
-
-  try {
-    const user = await Users.findById(_id);
-
-    if (!user) {
-      return res.status(404).send("No match found for the user id!");
-    }
-
-    res.send(user);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-router.patch("/users/:id", async (req, res) => {
+router.patch("/users/me", auth, async (req, res) => {
   const entries = ["name", "email", "password", "_id"];
   const objectKeys = Object.keys(req.body);
 
@@ -86,18 +70,15 @@ router.patch("/users/:id", async (req, res) => {
   }
 
   try {
-    const _id = req.params.id;
-    const user = await Users.findById(_id);
+    const user = req.user; //an object with user details like name, password, id
 
     objectKeys.forEach((key) => {
-      user[key] = req.body[key];
+      user[key] = req.body[key]; //this code dynamically sets the user value to the req body value the user wishes to update
+      //the user could decide to update any of the values(name, email address, password), and we tap into that
+      //with bracket notation and setting it dynamically with the value the user has chosen to update from the req.body
     });
 
     await user.save();
-
-    if (!user) {
-      return res.status(404).send("No user with matching id found!");
-    }
 
     res.status(200).send(user);
   } catch (error) {
@@ -105,14 +86,11 @@ router.patch("/users/:id", async (req, res) => {
   }
 });
 
-router.delete("/users/:id", async (req, res) => {
+router.delete("/users/me", auth, async (req, res) => {
   try {
-    const user = await Users.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).send("No user with matching id found!");
-    }
+    await req.user.remove();
 
-    res.status(200).send(user);
+    res.status(200).send(req.user);
   } catch (error) {
     res.status(500).send(error);
   }
