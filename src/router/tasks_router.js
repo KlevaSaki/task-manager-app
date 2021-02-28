@@ -18,9 +18,35 @@ router.post("/tasks", auth, async (req, res) => {
 });
 
 router.get("/tasks", auth, async (req, res) => {
+  const match = {};
+  const sort = {};
+
+  if (req.query.completed) {
+    match.completed = req.query.completed === "true"; //I love this statement. This dynamically sorts the returned data depending on the value the user
+    //puts in the query string. This will set match.completed to a boolean value depending on whether the req.query.completed is true/false(meaning having the string true/false)
+  }
+
+  //Get /tasks?sortBy=createdAt:asc
+  if (req.query.sortBy) {
+    const parts = req.query.sortBy.split(":");
+
+    sort[parts[0]] = parts[1] === "desc" ? -1 : 1;
+    // This will return { sort : {createdAt: -1}}
+  }
+
   try {
-    // const task = await Tasks.find({ author: req.user._id });
-    await req.user.populate("tasks").execPopulate();
+    // const task = await Tasks.find({ author: req.user._id }); Another way of populating the tasks route with its author Id.
+    await req.user
+      .populate({
+        path: "tasks",
+        match,
+        options: {
+          limit: parseInt(req.query.limit),
+          skip: parseInt(req.query.skip),
+          sort,
+        },
+      })
+      .execPopulate();
 
     res.status(200).send(req.user.tasks);
   } catch (error) {
