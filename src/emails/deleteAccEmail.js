@@ -19,11 +19,6 @@ var req = http.request(options, function (res) {
   res.on("data", function (chunk) {
     chunks.push(chunk);
   });
-
-  res.on("end", function () {
-    var body = Buffer.concat(chunks);
-    console.log(body.toString());
-  });
 });
 
 const sendDeleteAccMessage = (email, name) => {
